@@ -1,0 +1,51 @@
+`include "discipline.vams"
+`include "constants.vams"
+
+module tb_sar_adc;
+
+    //===============================
+    // Signals
+    //===============================
+    electrical vin;
+    logic clk;
+    logic [9:0] dout;      // for 10-bit ADC
+
+    //===============================
+    // DUT Instance
+    //===============================
+    sar_adc #(
+        .N(10),
+        .vrefp(1.0),
+        .vrefn(0.0),
+        .comp_offset(2e-3),
+        .mismatch_sigma(0.002)
+    ) DUT (
+        .vin(vin),
+        .clk(clk),
+        .dout(dout)
+    );
+
+    //===============================
+    // Clock Generation
+    //===============================
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk;   // 100 MHz clock (10 ns period)
+    end
+
+    //===============================
+    // Analog Input Source (ramp)
+    //===============================
+    analog begin
+        // Ramp from 0 → 1.0 V over 100 us
+        V(vin) <+ transition(0.0, 1.0, 100u, 5n);
+    end
+
+    //===============================
+    // Output Monitor
+    //===============================
+    always @(posedge clk) begin
+        $display("Time=%0t  ADC Code = %d", $realtime, dout);
+    end
+
+endmodule
